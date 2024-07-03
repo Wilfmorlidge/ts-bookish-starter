@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 
 import healthcheckRoutes from './controllers/healthcheckController';
 import bookRoutes from './controllers/bookController';
-import { Connection } from 'tedious';
+import { Request as tedious_Request, Connection } from 'tedious';
 
 // estbalishing connection with tedious
 
@@ -25,6 +25,7 @@ app.use('/books', bookRoutes);
 app.use('/dumpbooks', dumpbooks_connection);
 
 var one = {}
+var rowcount = {}
 
 function dumpbooks_connection(req: Request, res: Response) {
     var Connection = require('tedious').Connection;
@@ -45,47 +46,58 @@ function dumpbooks_connection(req: Request, res: Response) {
         }
     };
 
-    var connection = new Connection(config);
+    var connection = new Connection(config)
 
-    connection.on('connect', async function(err) {
-    if(err) {
-        console.log("connection unsuccessful")
-        console.log('Error: ', err)
-    } 
-    console.log("connection successful")
-    await dumpbooks(res,connection);
+    console.log(new Promise((resolve,reject) => 
+        connection.on('connect', function(err) {
+            if(err) {
+                console.log("connection unsuccessful")
+                console.log('Error: ', err)
+            } 
+            console.log("connection successful")
+            var Request = require('tedious').Request;
+            resolve(Request = new Request("SELECT * FROM Catalogue", function(err, rowCount) {
+                if (err) {
+                  reject(err);
+                } else {
+                  // and we close the connection
+                }
+              }));
+            
+              this.on('row', function(columns) {
+                resolve(columns)
+              });
+            
+              connection.execSql(this);
+     //rowcount = dumpbooks(res,connection);
     //output = {message: "interface successful"}
        //const output: any = dumpbooks()
        //return res.json({message: "done gone did it"});
-    });
+        })));
 connection.connect();
-//return res.json(one);
+//return res.json(rowcount);
 }
 
 
-async function dumpbooks(res: Response, connection: Connection): Promise<Response>{
-    var output = {}
-    var Request = require('tedious').Request;
-    console.log("life is not purposeful")
-    var request = new Request("SELECT * FROM Catalogue", function(err, rowCount) {
-    if (err) {
-      console.log(err);
-    } else {
+//function dumpbooks(): any {
+   // var output = {}
+   // var Request = require('tedious').Request;
+   // console.log("life is not purposeful")
+    //var request = new Request("SELECT * FROM Catalogue", function(err, rowCount) {
+    //if (err) {
+     // reject(err);
+    //} else {
       // and we close the connection
-      connection.close()
-    }
-  });
+    //}
+ // });
 
-  request.on('row', function(columns) {
-    columns.forEach(function(column) {
-        console.log(column)
-      output += column
-    });
-  });
+ // request.on('row', function(columns) {
+   // resolve(columns)
+ // });
 
-  connection.execSql(request);
-  return res.json(output)
+  //connection.execSql(request);
+  //return res.json(output)
   //const test = request
   //output = test
   //console.log(output)
-}
+//}
