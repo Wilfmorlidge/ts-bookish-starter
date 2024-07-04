@@ -1,14 +1,15 @@
 import express from 'express';
 import 'dotenv/config';
-import { Request, Response } from "express";
+import { Router, Request, Response } from 'express';
 
 import healthcheckRoutes from './controllers/healthcheckController';
 import bookRoutes from './controllers/bookController';
 import {Request as tedious_Request, Connection } from 'tedious';
 import dumpbooks from './controllers/dumpbooks';
+import { connect } from './connector'
+import register from './controllers/register';
 
 // estbalishing connection with tedious
-
 
 const port = process.env['PORT'] || 3000;
 
@@ -24,3 +25,7 @@ app.listen(port, () => {
 app.use('/healthcheck', healthcheckRoutes);
 app.use('/books', bookRoutes);
 app.use('/dumpbooks', dumpbooks);
+app.use('/register', register);
+
+
+
