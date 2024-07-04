@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 
 import healthcheckRoutes from './controllers/healthcheckController';
 import bookRoutes from './controllers/bookController';
-import { Connection } from 'tedious';
+import {Request as tedious_Request, Connection } from 'tedious';
 
 // estbalishing connection with tedious
 
@@ -22,70 +22,87 @@ app.listen(port, () => {
  */
 app.use('/healthcheck', healthcheckRoutes);
 app.use('/books', bookRoutes);
-app.use('/dumpbooks', dumpbooks_connection);
+app.use('/dumpbooks', redundant_function);
 
 var one = {}
+var config = {
+  server: "KOMODODRAGON",
+  authentication: {
+      type: "default",
+      options: {  
+          userName: "User",
+          password: "&inger_sn4p3402",
+      }
+  },
+  options: {
+      trustedConnection: true,
+      encrypt: true,
+      enableArithAbort: true,
+      trustServerCertificate: true
+  }
+};
 
-function dumpbooks_connection(req: Request, res: Response) {
+interface returnedBooks {
+  books: any[]
+}
+
+function redundant_function(req: Request, res:Response) {
+  dumpbooks_connection()
+  .then((response) => {
+    res.json(response)
+  })
+  .catch((err) => {
+    res.send("your query is broken");
+  })
+
+}
+
+function dumpbooks_connection(): Promise<returnedBooks> { 
+    var Request = require('tedious').Request;
     var Connection = require('tedious').Connection;
-    var config = {
-        server: "KOMODODRAGON",
-        authentication: {
-            type: "default",
-            options: {  
-                userName: "User",
-                password: "&inger_sn4p3402",
-            }
-        },
-        options: {
-            trustedConnection: true,
-            encrypt: true,
-            enableArithAbort: true,
-            trustServerCertificate: true
-        }
-    };
-
     var connection = new Connection(config);
+    connection.connect();
 
-    connection.on('connect', async function(err) {
-    if(err) {
-        console.log("connection unsuccessful")
-        console.log('Error: ', err)
-    } 
-    console.log("connection successful")
-    await dumpbooks(res,connection);
+    return (new Promise ((resolve,reject) => {connection.on('connect', async function(err) {
+        if(err) {
+          console.log("connection unsuccessful")
+          reject(err);
+        } 
+          console.log("connection successful")
+          resolve(dumpbooks())
     //output = {message: "interface successful"}
        //const output: any = dumpbooks()
        //return res.json({message: "done gone did it"});
+      });
+    }));
+    function dumpbooks(): Promise<returnedBooks>{
+      const request = new tedious_Request("SELECT * FROM Catalogue", (err, rowCount) => {
+      if (err) {
+        console.log("request unsuccessful")
+        console.log(err);
+      } else {
+        // and we close the connection
+        console.log("request successfull")
+        connection.close()
+      }
     });
-connection.connect();
+  
+    const response: returnedBooks = {books :[]}
+    connection.execSql(request);
+    return new Promise ((resolve,reject) => {request.on('row', (columns) => {
+      console.log("row defined")
+      response.books.push(columns)
+      });
+      request.on('doneInProc',() => {
+        console.log("true success")
+        console.log(response)
+        resolve(response)
+      });
+      request.on('error',(err) =>{
+        console.log("on end error")
+        reject(err);
+      })
+    });
+  }
 //return res.json(one);
-}
-
-
-async function dumpbooks(res: Response, connection: Connection): Promise<Response>{
-    var output = {}
-    var Request = require('tedious').Request;
-    console.log("life is not purposeful")
-    var request = new Request("SELECT * FROM Catalogue", function(err, rowCount) {
-    if (err) {
-      console.log(err);
-    } else {
-      // and we close the connection
-      connection.close()
-    }
-  });
-
-  request.on('row', function(columns) {
-    columns.forEach(function(column) {
-        console.log(column)
-      output += column
-    });
-  });
-
-  connection.execSql(request);
-  return res.json(output)
-  //const test = request
-  //output = test
-  //console.log(output)
 }
