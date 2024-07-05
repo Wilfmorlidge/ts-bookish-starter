@@ -3,6 +3,7 @@ import express from 'express';
 import 'dotenv/config';
 import {Request as tedious_Request, Connection } from 'tedious';
 import { connect } from '../connector'
+import validator from './validator'
 //import {Catalogue, Users, checkouts} from '../models'
 
 interface returnedBooks {
@@ -20,13 +21,17 @@ class dumpbooks {
 
     constructor() {
         this.router = Router();
-        this.router.get('/', this.redundant_function.bind(this));
+        this.router.get('/:username/:password', this.redundant_function.bind(this));
     }
       
     async redundant_function(req: Request, res:Response) {
-        const results = await sequelize.query('SELECT * FROM Catalogue');
-        console.log(results)
-        res.json(results)
+        const queryvalid: boolean = await validator(req.params.username,req.params.password)
+        if (queryvalid == true) {
+            const results = await sequelize.query('SELECT * FROM Catalogue');
+            //console.log(results)
+            res.json(results)
+        }
+
     };
 }     
 

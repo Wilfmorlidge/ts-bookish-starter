@@ -9,19 +9,12 @@ class register {
 
     constructor() {
         this.router = Router();
-        this.router.post('/', this.register.bind(this));
+        this.router.get('/:user_ID/:username/:password', this.register.bind(this));
     }
-
-    register1(req: Request, res: Response) {
-        res.json({message: 'accepts'})
-    }
-
     async register(req: Request, res: Response) {
         console.log("works")
-        const results1 = await sequelize.query('SELECT * FROM Users')
-        console.log(results1)
-        const results = await sequelize.query('INSERT INTO Users VALUES('+req.params.usernam+','+req.params.password+')')
         res.json({username: req.params.username, password: req.params.password})
+        const results = await sequelize.query('INSERT INTO Users VALUES('+req.params.user_ID+','+req.params.username+','+req.params.password+')')
     }
 };
 
